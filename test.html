@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Time Tracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px;
+            background: linear-gradient(135deg, #e9ecef, #f8f9fa);
+            color: #2d3748;
+            line-height: 1.6;
+        }
+        body.dark-theme {
+            background: linear-gradient(135deg, #2d3748, #4a5568);
+            color: #e2e8f0;
+        }
+        h1 {
+            color: #1a202c;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            font-weight: 700;
+            display: inline-block;
+        }
+        body.dark-theme h1 {
+            color: #e2e8f0;
+        }
+        h2 {
+            color: #4a5568;
+            font-weight: 600;
+            margin: 40px 0 20px;
+        }
+        body.dark-theme h2 {
+            color: #a0aec0;
+        }
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .status-table {
+            background: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        body.dark-theme .status-table {
+            background: #4a5568;
+        }
+        .status-table table {
+            border-collapse: collapse;
+            width: 300px;
+        }
+        .status-table th, .status-table td {
+            padding: 15px 20px;
+            text-align: left;
+        }
+        .status-table th {
+            background: linear-gradient(90deg, #dfe6e9, #ecf0f1);
+            color: #2d3748;
+            font-weight: 600;
+        }
+        body.dark-theme .status-table th {
+            background: linear-gradient(90deg, #718096, #a0aec0);
+            color: #e2e8f0;
+        }
+        .status-table td {
+            background: #fff;
+            color: #4a5568;
+        }
+        body.dark-theme .status-table td {
+            background: #4a5568;
+            color: #e2e8f0;
+        }
+        .menu-btn {
+            background: none;
+            border: none;
+            font-size: 2em;
+            cursor: pointer;
+            color: #2d3748;
+            padding: 10px;
+        }
+        body.dark-theme .menu-btn {
+            color: #e2e8f0;
+        }
+        .menu-dropdown {
+            display: none;
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            padding: 10px;
+            z-index: 10;
+        }
+        body.dark-theme .menu-dropdown {
+            background: #4a5568;
+        }
+        .menu-dropdown button {
+            display: block;
+            width: 100px;
+            text-align: left;
+            padding: 10px;
+            margin: 5px 0;
+            background: none;
+            border: none;
+            color: #2d3748;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: 600;
+        }
+        body.dark-theme .menu-dropdown button {
+            color: #e2e8f0;
+        }
+        button {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        button.clock-in {
+            background: linear-gradient(45deg, #00b894, #55efc4);
+            color: #fff;
+        }
+        button.clock-out {
+            background: linear-gradient(45deg, #0984e3, #74b9ff);
+            color: #fff;
+        }
+        .day-container {
+            margin: 20px 0;
+            background: #fff;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        body.dark-theme .day-container {
+            background: #4a5568;
+        }
+        .day-header {
+            background: linear-gradient(90deg, #dfe6e9, #ecf0f1);
+            padding: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        body.dark-theme .day-header {
+            background: linear-gradient(90deg, #718096, #a0aec0);
+            color: #e2e8f0;
+        }
+        .day-table {
+            width: 100%;
+            border-collapse: collapse;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+        }
+        .day-table th {
+            background: #b2bec3;
+            color: #2d3748;
+            font-weight: 600;
+        }
+        body.dark-theme .day-table th {
+            background: #718096;
+            color: #e2e8f0;
+        }
+        .day-table tr:nth-child(even) {
+            background: #f8fafc;
+        }
+        body.dark-theme .day-table tr:nth-child(even) {
+            background: #5a657a;
+        }
+        .daily-total {
+            background: #a3bffa;
+            font-weight: 600;
+            color: #1a202c;
+        }
+        body.dark-theme .daily-total {
+            background: #7f9cf5;
+            color: #e2e8f0;
+        }
+        #subtotal {
+            margin-top: 40px;
+            font-size: 1.5em;
+            color: #1a202c;
+            background: #fff;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            font-weight: 600;
+            text-align: right;
+        }
+        body.dark-theme #subtotal {
+            background: #4a5568;
+            color: #e2e8f0;
+        }
+        .delete-btn {
+            background: linear-gradient(45deg, #e17055, #fab1a0);
+            padding: 8px 15px;
+            font-size: 0.9em;
+            border-radius: 20px;
+            color: #fff;
+        }
+        #settingsPanel, #adminPanel {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            max-height: 80vh;
+            background: #fff;
+            padding: 40px 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            border-radius: 15px;
+            z-index: 20;
+            overflow-y: auto;
+        }
+        body.dark-theme #settingsPanel, body.dark-theme #adminPanel {
+            background: #4a5568;
+            color: #e2e8f0;
+        }
+        .panel-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .panel-section {
+            border-bottom: 1px solid #cbd5e0;
+            padding-bottom: 20px;
+        }
+        body.dark-theme .panel-section {
+            border-bottom: 1px solid #a0aec0;
+        }
+        .panel-section:last-child {
+            border-bottom: none;
+        }
+        .panel-content h3 {
+            margin: 0 0 20px;
+            font-weight: 600;
+            color: #1a202c;
+        }
+        body.dark-theme .panel-content h3 {
+            color: #e2e8f0;
+        }
+        .panel-content label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+        .panel-content input, .panel-content select {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e0;
+            background: #fff;
+            color: #2d3748;
+            width: 150px;
+        }
+        body.dark-theme .panel-content input, body.dark-theme .panel-content select {
+            background: #718096;
+            color: #e2e8f0;
+            border-color: #a0aec0;
+        }
+        .theme-switcher {
+            display: flex;
+            gap: 10px;
+        }
+        .theme-switcher button {
+            padding: 8px 15px;
+            border-radius: 20px;
+            background: #dfe6e9;
+            color: #2d3748;
+            text-transform: none;
+            letter-spacing: normal;
+        }
+        .theme-switcher button.active {
+            background: #00b894;
+            color: #fff;
+        }
+        body.dark-theme .theme-switcher button {
+            background: #718096;
+            color: #e2e8f0;
+        }
+        body.dark-theme .theme-switcher button.active {
+            background: #55efc4;
+            color: #2d3748;
+        }
+        .panel-content button {
+            margin-top: 10px;
+            width: 100%;
+            background: linear-gradient(45deg, #0984e3, #74b9ff);
+            color: #fff;
+        }
+    </style>
+</head>
+<body onclick="closePanels(event)">
+    <div class="header-container">
+        <div class="status-table">
+            <table>
+                <tr><th>Status</th><td id="currentStatus">Not Clocked In</td></tr>
+                <tr><th>Current Time</th><td id="timeDisplay"></td></tr>
+            </table>
+        </div>
+        <div>
+            <button class="clock-in" onclick="clockIn(); event.stopPropagation()">Clock In</button>
+            <button class="clock-out" onclick="clockOut(); event.stopPropagation()">Clock Out</button>
+            <button class="menu-btn" onclick="toggleMenu(); event.stopPropagation()">⋮</button>
+            <div class="menu-dropdown" id="menuDropdown" onclick="event.stopPropagation()">
+                <button onclick="openSettings()">Settings</button>
+                <button onclick="openAdmin()">Admin</button>
+            </div>
+        </div>
+    </div>
+    <h1><span id="userName"></span>'s Work Time Tracker <span id="activeTimer"></span></h1>
+    <h2>Work History</h2>
+    <div id="workHistory"></div>
+    <div id="subtotal">Total Hours: <span id="totalHours">0</span><br>Earnings: $<span id="totalEarnings">0.00</span></div>
+
+    <div id="settingsPanel" onclick="event.stopPropagation()">
+        <div class="panel-content">
+            <div class="panel-section">
+                <h3>Appearance</h3>
+                <label>Theme:
+                    <div class="theme-switcher">
+                        <button onclick="setTheme('light')" id="lightThemeBtn">Light</button>
+                        <button onclick="setTheme('dark')" id="darkThemeBtn">Dark</button>
+                    </div>
+                </label>
+                <label>Font Size: <select id="fontSize" onchange="updateSettings()">
+                    <option value="small">Small</option>
+                    <option value="medium">Medium</option>
+                    <option value="large">Large</option>
+                </select></label>
+            </div>
+            <div class="panel-section">
+                <h3>Time Settings</h3>
+                <label>Clock Format: <select id="clockFormat" onchange="updateSettings()">
+                    <option value="12">12-hour</option>
+                    <option value="24">24-hour</option>
+                </select></label>
+                <label>Auto Clock Out (hours): <input type="number" id="autoClockOut" min="1" max="24" onchange="updateSettings()"></label>
+            </div>
+            <div class="panel-section">
+                <h3>Pay Settings</h3>
+                <label>Hourly Rate ($): <input type="number" id="hourlyRate" step="0.01" min="0" onchange="updateSettings()"></label>
+            </div>
+            <div class="panel-section">
+                <h3>Data</h3>
+                <button onclick="savePDF()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminPanel" onclick="event.stopPropagation()">
+        <div class="panel-content" id="adminContent"></div>
+    </div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+        let clockInTime = null;
+        let workHistory = JSON.parse(localStorage.getItem('workHistory')) || [];
+        let adminPassword = localStorage.getItem('adminPassword') || null;
+        let settings = JSON.parse(localStorage.getItem('settings')) || {
+            theme: 'light',
+            autoClockOut: null,
+            clockFormat: '12',
+            fontSize: 'medium',
+            hourlyRate: 0,
+            userName: '',
+            adminTotalHours: 0
+        };
+
+        if (!settings.userName) {
+            const name = prompt("Enter your name:");
+            const rate = parseFloat(prompt("Enter your hourly pay rate ($):"));
+            if (name && !isNaN(rate) && rate >= 0) {
+                settings.userName = name;
+                settings.hourlyRate = rate;
+                localStorage.setItem('settings', JSON.stringify(settings));
+            } else {
+                alert("Invalid input. Please reload and try again.");
+            }
+        }
+
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('timeDisplay').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: settings.clockFormat === '12' });
+            if (clockInTime) {
+                const elapsedMs = Date.now() - clockInTime;
+                const hours = Math.floor(elapsedMs / 3600000).toString().padStart(2, '0');
+                const minutes = Math.floor((elapsedMs % 3600000) / 60000).toString().padStart(2, '0');
+                const seconds = Math.floor((elapsedMs % 60000) / 1000).toString().padStart(2, '0');
+                document.getElementById('activeTimer').textContent = `(${hours}:${minutes}:${seconds})`;
+            } else {
+                document.getElementById('activeTimer').textContent = '';
+            }
+            if (clockInTime && settings.autoClockOut && (Date.now() - clockInTime) / 3600000 >= settings.autoClockOut) clockOut();
+        }
+        setInterval(updateTime, 1000);
+
+        function formatDuration(hoursDecimal) {
+            const hours = Math.floor(hoursDecimal);
+            const minutes = Math.round((hoursDecimal - hours) * 60);
+            return hours < 1 ? `${minutes} minutes` : `${hours}:${minutes.toString().padStart(2, '0')}`;
+        }
+
+        function loadHistory() {
+            const container = document.getElementById('workHistory');
+            container.innerHTML = '';
+            const grouped = {};
+            workHistory.forEach(entry => {
+                const date = new Date(entry.date).toLocaleDateString([], { month: 'short', day: 'numeric' });
+                if (!grouped[date]) grouped[date] = [];
+                grouped[date].push(entry);
+            });
+
+            for (const [date, entries] of Object.entries(grouped)) {
+                const dayTotal = entries.reduce((sum, entry) => sum + (parseFloat(entry.duration) || 0), 0);
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'day-container';
+                dayDiv.innerHTML = `
+                    <div class="day-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' || !this.nextElementSibling.style.display ? 'table' : 'none'">
+                        ${date} - Total: ${formatDuration(dayTotal)}
+                    </div>
+                    <table class="day-table">
+                        <tr><th>Clock In</th><th>Clock Out</th><th>Duration</th><th>Action</th></tr>
+                        ${entries.map((entry, index) => `
+                            <tr>
+                                <td>${new Date(entry.clockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: settings.clockFormat === '12' })}</td>
+                                <td>${entry.clockOut ? new Date(entry.clockOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: settings.clockFormat === '12' }) : '-'}</td>
+                                <td>${entry.duration ? formatDuration(entry.duration) : '-'}</td>
+                                <td><button class="delete-btn" onclick="deleteEntry('${date}', ${index})">Delete</button></td>
+                            </tr>
+                        `).join('')}
+                        <tr class="daily-total"><td colspan="2">Daily Total</td><td>${formatDuration(dayTotal)}</td><td></td></tr>
+                    </table>
+                `;
+                container.appendChild(dayDiv);
+            }
+
+            document.getElementById('userName').textContent = settings.userName;
+            document.getElementById('totalHours').textContent = settings.adminTotalHours;
+            document.getElementById('totalEarnings').textContent = (settings.adminTotalHours * settings.hourlyRate).toFixed(2);
+            document.body.style.fontSize = settings.fontSize === 'small' ? '14px' : settings.fontSize === 'large' ? '18px' : '16px';
+        }
+
+        function clockIn() {
+            if (!clockInTime) {
+                clockInTime = new Date();
+                document.getElementById('currentStatus').textContent = 'Clocked In ' + clockInTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: settings.clockFormat === '12' });
+                workHistory.push({ date: clockInTime, clockIn: clockInTime.getTime(), clockOut: null, duration: null });
+                saveData();
+            }
+        }
+
+        function clockOut() {
+            if (clockInTime) {
+                const clockOutTime = new Date();
+                const currentEntry = workHistory[workHistory.length - 1];
+                currentEntry.clockOut = clockOutTime.getTime();
+                currentEntry.duration = (clockOutTime - clockInTime) / 3600000;
+                clockInTime = null;
+                document.getElementById('currentStatus').textContent = 'Not Clocked In';
+                saveData();
+                loadHistory();
+            }
+        }
+
+        function deleteEntry(date, index) {
+            if (confirm('Are you sure you want to delete this entry? (This won’t affect the total hours.)')) {
+                const grouped = {};
+                workHistory.forEach(entry => {
+                    const d = new Date(entry.date).toLocaleDateString([], { month: 'short', day: 'numeric' });
+                    if (!grouped[d]) grouped[d] = [];
+                    grouped[d].push(entry);
+                });
+                grouped[date].splice(index, 1);
+                workHistory = Object.values(grouped).flat();
+                saveData();
+                loadHistory();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('workHistory', JSON.stringify(workHistory));
+            localStorage.setItem('settings', JSON.stringify(settings));
+        }
+
+        function toggleMenu() {
+            const dropdown = document.getElementById('menuDropdown');
+            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function openSettings() {
+            const settingsPanel = document.getElementById('settingsPanel');
+            const adminPanel = document.getElementById('adminPanel');
+            settingsPanel.style.display = 'block';
+            adminPanel.style.display = 'none';
+            document.getElementById('autoClockOut').value = settings.autoClockOut || '';
+            document.getElementById('clockFormat').value = settings.clockFormat;
+            document.getElementById('fontSize').value = settings.fontSize;
+            document.getElementById('hourlyRate').value = settings.hourlyRate;
+            document.getElementById('lightThemeBtn').classList.toggle('active', settings.theme === 'light');
+            document.getElementById('darkThemeBtn').classList.toggle('active', settings.theme === 'dark');
+            toggleMenu();
+        }
+
+        function openAdmin() {
+            const settingsPanel = document.getElementById('settingsPanel');
+            const adminPanel = document.getElementById('adminPanel');
+            settingsPanel.style.display = 'none';
+            adminPanel.style.display = 'block';
+            toggleMenu();
+            const content = document.getElementById('adminContent');
+            content.innerHTML = adminPassword ? `
+                <h3>Admin Login</h3>
+                <label>Password: <input type="password" id="adminPasswordInput" placeholder="Enter password"></label>
+                <button onclick="verifyAdmin()">Login</button>
+            ` : `
+                <h3>Set Admin Password</h3>
+                <label>Password: <input type="password" id="newPassword" placeholder="Enter new password"></label>
+                <button onclick="setAdminPassword()">Set Password</button>
+            `;
+        }
+
+        function closePanels(event) {
+            const settingsPanel = document.getElementById('settingsPanel');
+            const adminPanel = document.getElementById('adminPanel');
+            const dropdown = document.getElementById('menuDropdown');
+            if (!settingsPanel.contains(event.target) && !adminPanel.contains(event.target) && !document.querySelector('.menu-btn').contains(event.target) && !dropdown.contains(event.target)) {
+                settingsPanel.style.display = 'none';
+                adminPanel.style.display = 'none';
+                dropdown.style.display = 'none';
+            }
+        }
+
+        function setTheme(theme) {
+            settings.theme = theme;
+            document.body.className = settings.theme === 'dark' ? 'dark-theme' : '';
+            document.getElementById('lightThemeBtn').classList.toggle('active', theme === 'light');
+            document.getElementById('darkThemeBtn').classList.toggle('active', theme === 'dark');
+            saveData();
+        }
+
+        function updateSettings() {
+            settings.autoClockOut = parseInt(document.getElementById('autoClockOut').value) || null;
+            settings.clockFormat = document.getElementById('clockFormat').value;
+            settings.fontSize = document.getElementById('fontSize').value;
+            settings.hourlyRate = parseFloat(document.getElementById('hourlyRate').value) || 0;
+            saveData();
+            loadHistory();
+        }
+
+        function setAdminPassword() {
+            const password = document.getElementById('newPassword').value;
+            if (password) {
+                adminPassword = password;
+                localStorage.setItem('adminPassword', adminPassword);
+                showAdminPanel();
+            } else {
+                alert('Please enter a password');
+            }
+        }
+
+        function verifyAdmin() {
+            if (document.getElementById('adminPasswordInput').value === adminPassword) showAdminPanel();
+            else alert('Incorrect password');
+        }
+
+        function showAdminPanel() {
+            document.getElementById('adminContent').innerHTML = `
+                <div class="panel-section">
+                    <h3>Time Management</h3>
+                    <label>Total Hours: <input type="number" id="adjustTotalHours" value="${settings.adminTotalHours}"></label>
+                    <button onclick="updateTotalHours()">Update Hours</button>
+                    <label>Max Session (hours): <input type="number" id="maxSession" value="${settings.autoClockOut || ''}" onchange="updateAdminSettings()"></label>
+                </div>
+                <div class="panel-section">
+                    <h3>Security</h3>
+                    <label>New Password: <input type="password" id="changePassword" placeholder="New password"></label>
+                    <button onclick="changeAdminPassword()">Change Password</button>
+                </div>
+                <div class="panel-section">
+                    <h3>Data</h3>
+                    <button onclick="clearAllData()">Clear All</button>
+                </div>
+            `;
+        }
+
+        function updateTotalHours() {
+            const newTotal = parseInt(document.getElementById('adjustTotalHours').value) || 0;
+            if (newTotal >= 0) {
+                settings.adminTotalHours = newTotal;
+                saveData();
+                loadHistory();
+            } else {
+                alert('Please enter a valid number');
+            }
+        }
+
+        function updateAdminSettings() {
+            settings.autoClockOut = parseInt(document.getElementById('maxSession').value) || null;
+            saveData();
+        }
+
+        function changeAdminPassword() {
+            const newPassword = document.getElementById('changePassword').value;
+            if (newPassword) {
+                adminPassword = newPassword;
+                localStorage.setItem('adminPassword', adminPassword);
+                alert('Password changed successfully');
+                showAdminPanel();
+            } else {
+                alert('Please enter a new password');
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear all work history? (Total hours set by admin will remain.)')) {
+                workHistory = [];
+                clockInTime = null;
+                localStorage.setItem('workHistory', JSON.stringify(workHistory));
+                loadHistory();
+            }
+        }
+
+        function savePDF() {
+            const doc = new jsPDF();
+            let y = 10;
+            doc.setFontSize(16);
+            doc.text(`${settings.userName}'s Work Time Tracker Report`, 10, y);
+            y += 10;
+            doc.setFontSize(12);
+            doc.text(`Generated on: ${new Date().toLocaleString()}`, 10, y);
+            y += 20;
+
+            const validEntries = workHistory.filter(entry => entry.clockIn && entry.clockOut);
+            if (validEntries.length > 0) {
+                const firstIn = new Date(validEntries[0].clockIn);
+                const lastOut = new Date(validEntries[validEntries.length - 1].clockOut);
+                const breaks = validEntries.length - 1;
+
+                doc.text(`First Clock In: ${firstIn.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: settings.clockFormat === '12' })}`, 10, y);
+                y += 10;
+                doc.text(`Last Clock Out: ${lastOut.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: settings.clockFormat === '12' })}`, 10, y);
+                y += 10;
+                doc.text(`Number of Breaks: ${breaks}`, 10, y);
+                y += 10;
+                doc.text(`Total Hours (Admin Set): ${settings.adminTotalHours}`, 10, y);
+                y += 10;
+                doc.text(`Total Earnings: $${(settings.adminTotalHours * settings.hourlyRate).toFixed(2)}`, 10, y);
+            } else {
+                doc.text("No completed work sessions to report.", 10, y);
+            }
+
+            doc.save('WorkTimeTracker_Report.pdf');
+        }
+
+        document.body.className = settings.theme === 'dark' ? 'dark-theme' : '';
+        updateTime();
+        loadHistory();
+    </script>
+</body>
+</html>
